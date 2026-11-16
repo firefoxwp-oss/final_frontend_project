@@ -12,16 +12,16 @@ export const MIN_WIDTH = 320;
 export const MIN_HEIGHT = 240;
 
 export const EXTENSIONES_PERMITIDAS = [
-  ".mp4",
-  ".avi",
-  ".mkv",
-  ".mp3",
-  ".mov",
-  ".m4v",
-  ".webm",
+  '.mp4',
+  '.avi',
+  '.mkv',
+  '.mp3',
+  '.mov',
+  '.m4v',
+  '.webm',
 ];
 
-export const ACCEPT_ATTR = EXTENSIONES_PERMITIDAS.join(",");
+export const ACCEPT_ATTR = EXTENSIONES_PERMITIDAS.join(',');
 
 export interface ValidationResult {
   isValid: boolean;
@@ -29,30 +29,30 @@ export interface ValidationResult {
 }
 
 const extensionDe = (nombre: string): string => {
-  const i = nombre.lastIndexOf(".");
-  return i === -1 ? "" : nombre.slice(i).toLowerCase();
+  const i = nombre.lastIndexOf('.');
+  return i === -1 ? '' : nombre.slice(i).toLowerCase();
 };
 
 const formatearMB = (bytes: number) => Math.round(bytes / (1024 * 1024));
 
 /** Lee metadatos del vídeo sin subirlo: resolución y duración. */
 const inspeccionarVideo = (file: File): Promise<ValidationResult> =>
-  new Promise((resolve) => {
-    const video = document.createElement("video");
-    video.preload = "metadata";
+  new Promise(resolve => {
+    const video = document.createElement('video');
+    video.preload = 'metadata';
     const url = URL.createObjectURL(file);
 
     const limpiar = () => URL.revokeObjectURL(url);
 
     video.onloadedmetadata = () => {
-      const { videoWidth: w, videoHeight: h, duration } = video;
+      const {videoWidth: w, videoHeight: h, duration} = video;
       limpiar();
 
       if (duration && duration > MAX_DURATION_SECONDS) {
         resolve({
           isValid: false,
           error: `El vídeo dura ${Math.round(
-            duration / 60
+            duration / 60,
           )} minutos y el máximo son ${MAX_DURATION_SECONDS / 60}.`,
         });
         return;
@@ -65,14 +65,14 @@ const inspeccionarVideo = (file: File): Promise<ValidationResult> =>
         });
         return;
       }
-      resolve({ isValid: true });
+      resolve({isValid: true});
     };
 
     video.onerror = () => {
       limpiar();
       resolve({
         isValid: false,
-        error: "No se pudo leer el archivo. ¿Está dañado o incompleto?",
+        error: 'No se pudo leer el archivo. ¿Está dañado o incompleto?',
       });
     };
 
@@ -81,14 +81,14 @@ const inspeccionarVideo = (file: File): Promise<ValidationResult> =>
 
 export const validateFile = async (file: File): Promise<ValidationResult> => {
   if (file.size === 0) {
-    return { isValid: false, error: "El archivo está vacío." };
+    return {isValid: false, error: 'El archivo está vacío.'};
   }
 
   if (file.size > MAX_FILE_SIZE) {
     return {
       isValid: false,
       error: `El archivo pesa ${formatearMB(
-        file.size
+        file.size,
       )} MB y el máximo es ${formatearMB(MAX_FILE_SIZE)} MB.`,
     };
   }
@@ -97,8 +97,8 @@ export const validateFile = async (file: File): Promise<ValidationResult> => {
   if (!EXTENSIONES_PERMITIDAS.includes(ext)) {
     return {
       isValid: false,
-      error: `Formato no admitido (${ext || "sin extensión"}). Admitidos: ${EXTENSIONES_PERMITIDAS.join(
-        ", "
+      error: `Formato no admitido (${ext || 'sin extensión'}). Admitidos: ${EXTENSIONES_PERMITIDAS.join(
+        ', ',
       )}.`,
     };
   }

@@ -1,9 +1,9 @@
-import { Routes, Route } from "react-router-dom";
-import { UploadPage } from "./pages";
-import { LoginPage } from "./pages/LoginPage";
-import { ProtectedRoute } from "./components/ProtectedRoute";
-import ProjectsPage from "./pages/ProjectsPage";
-import ResultPage from "./pages/ResultPage";
+import {Routes, Route} from 'react-router-dom';
+import {UploadPage} from './pages';
+import {LoginPage} from './pages/LoginPage';
+import {ProtectedRoute} from './components/ProtectedRoute';
+import ProjectsPage from './pages/ProjectsPage';
+import ResultPage from './pages/ResultPage';
 
 function App() {
   return (

@@ -1,12 +1,12 @@
-import React, { useState } from "react";
-import { Navigate } from "react-router-dom";
-import { LoginForm } from "../components/LoginForm";
-import { RegisterForm } from "../components/RegisterForm";
-import { useAuth } from "../context/AuthContext";
+import React, {useState} from 'react';
+import {Navigate} from 'react-router-dom';
+import {LoginForm} from '../components/LoginForm';
+import {RegisterForm} from '../components/RegisterForm';
+import {useAuth} from '../context/useAuth';
 
 export const LoginPage: React.FC = () => {
   const [isLogin, setIsLogin] = useState(true);
-  const { isAuthenticated } = useAuth();
+  const {isAuthenticated} = useAuth();
 
   if (isAuthenticated) {
     return <Navigate to="/" replace />;

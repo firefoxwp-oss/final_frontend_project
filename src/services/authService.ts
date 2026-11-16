@@ -1,65 +1,63 @@
-import axios from "axios";
+import axios from 'axios';
 
 export const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000";
+  import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000';
 
 const authAPI = axios.create({
   baseURL: API_BASE_URL,
   headers: {
-    "Content-Type": "application/json",
+    'Content-Type': 'application/json',
   },
 });
 
 authAPI.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem("access_token");
+  config => {
+    const token = localStorage.getItem('access_token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },
-  (error) => Promise.reject(error)
+  error => Promise.reject(error),
 );
 
 authAPI.interceptors.response.use(
-  (response) => response,
-  async (error) => {
+  response => response,
+  async error => {
     const originalRequest = error.config;
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
       try {
-        const refreshToken = localStorage.getItem("refresh_token");
+        const refreshToken = localStorage.getItem('refresh_token');
         if (refreshToken) {
           const response = await axios.post(`${API_BASE_URL}/refresh`, {
             refresh_token: refreshToken,
           });
-          const { access_token, refresh_token: newRefreshToken } =
-            response.data;
-          localStorage.setItem("access_token", access_token);
-          localStorage.setItem("refresh_token", newRefreshToken);
+          const {access_token, refresh_token: newRefreshToken} = response.data;
+          localStorage.setItem('access_token', access_token);
+          localStorage.setItem('refresh_token', newRefreshToken);
           originalRequest.headers.Authorization = `Bearer ${access_token}`;
           return authAPI(originalRequest);
         }
       } catch (refreshError) {
-        localStorage.removeItem("access_token");
-        localStorage.removeItem("refresh_token");
-        window.location.href = "/login";
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('refresh_token');
+        window.location.href = '/login';
         return Promise.reject(refreshError);
       }
     }
     return Promise.reject(error);
-  }
+  },
 );
-
 
 /** Lee el `exp` del JWT sin dependencias externas. */
 const expiracionDe = (token: string): number | null => {
   try {
-    const payload = token.split(".")[1];
+    const payload = token.split('.')[1];
     if (!payload) return null;
-    const json = atob(payload.replace(/-/g, "+").replace(/_/g, "/"));
-    const data = JSON.parse(json) as { exp?: number };
-    return typeof data.exp === "number" ? data.exp : null;
+    const json = atob(payload.replace(/-/g, '+').replace(/_/g, '/'));
+    const data = JSON.parse(json) as {exp?: number};
+    return typeof data.exp === 'number' ? data.exp : null;
   } catch {
     return null;
   }
@@ -76,10 +74,10 @@ let renovacionEnCurso: Promise<string | null> | null = null;
  * puede durar mas que la vida del token.
  */
 export const ensureFreshToken = async (
-  margenSegundos = 300
+  margenSegundos = 300,
 ): Promise<string | null> => {
-  const token = localStorage.getItem("access_token");
-  const refresh = localStorage.getItem("refresh_token");
+  const token = localStorage.getItem('access_token');
+  const refresh = localStorage.getItem('refresh_token');
 
   if (token) {
     const exp = expiracionDe(token);
@@ -92,11 +90,11 @@ export const ensureFreshToken = async (
 
   if (!renovacionEnCurso) {
     renovacionEnCurso = axios
-      .post(`${API_BASE_URL}/refresh`, { refresh_token: refresh })
-      .then((res) => {
-        const { access_token, refresh_token } = res.data;
-        localStorage.setItem("access_token", access_token);
-        localStorage.setItem("refresh_token", refresh_token);
+      .post(`${API_BASE_URL}/refresh`, {refresh_token: refresh})
+      .then(res => {
+        const {access_token, refresh_token} = res.data;
+        localStorage.setItem('access_token', access_token);
+        localStorage.setItem('refresh_token', refresh_token);
         return access_token as string;
       })
       .catch(() => null)
@@ -126,6 +124,13 @@ export interface RegisterRequest {
   password: string;
 }
 
+/** Error de una peticion HTTP (axios), con los campos que se consultan. */
+export interface ErrorHttp {
+  code?: string;
+  message?: string;
+  response?: {status?: number; data?: {detail?: string}};
+}
+
 export interface AuthResponse {
   access_token: string;
   refresh_token: string;
@@ -134,12 +139,12 @@ export interface AuthResponse {
 
 export const authService = {
   async register(userData: RegisterRequest): Promise<User> {
-    const response = await authAPI.post("/register", userData);
+    const response = await authAPI.post('/register', userData);
     return response.data;
   },
 
   async login(credentials: LoginRequest): Promise<AuthResponse> {
-    const response = await authAPI.post("/login", credentials);
+    const response = await authAPI.post('/login', credentials);
     return response.data;
   },
 
@@ -151,30 +156,30 @@ export const authService = {
   },
 
   async getCurrentUser(): Promise<User> {
-    const response = await authAPI.get("/me");
+    const response = await authAPI.get('/me');
     return response.data;
   },
 
   setTokens(accessToken: string, refreshToken: string): void {
-    localStorage.setItem("access_token", accessToken);
-    localStorage.setItem("refresh_token", refreshToken);
+    localStorage.setItem('access_token', accessToken);
+    localStorage.setItem('refresh_token', refreshToken);
   },
 
   getAccessToken(): string | null {
-    return localStorage.getItem("access_token");
+    return localStorage.getItem('access_token');
   },
 
   getRefreshToken(): string | null {
-    return localStorage.getItem("refresh_token");
+    return localStorage.getItem('refresh_token');
   },
 
   isAuthenticated(): boolean {
-    return !!localStorage.getItem("access_token");
+    return !!localStorage.getItem('access_token');
   },
 
   logout(): void {
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("refresh_token");
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
   },
 };
 
