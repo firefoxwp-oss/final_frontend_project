@@ -1,44 +1,26 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
-import type { ReactNode } from "react";
-import { useNavigate } from "react-router-dom";
-import { authService } from "../services/authService";
+import React, {useState, useEffect} from 'react';
+import type {ReactNode} from 'react';
+import {useNavigate} from 'react-router-dom';
+import {authService} from '../services/authService';
 import type {
   User,
   LoginRequest,
   RegisterRequest,
-} from "../services/authService";
-
-interface AuthContextType {
-  user: User | null;
-  loading: boolean;
-  isAuthenticated: boolean;
-  login: (credentials: LoginRequest) => Promise<void>;
-  register: (userData: RegisterRequest) => Promise<void>;
-  logout: () => void;
-  refreshUserData: () => Promise<void>;
-}
-
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider");
-  }
-  return context;
-};
+} from '../services/authService';
+import {AuthContext} from './authState';
+import type {AuthContextType} from './authState';
 
 interface AuthProviderProps {
   children: ReactNode;
 }
 
 // Componente interno para usar hooks de React Router
-const AuthProviderInner: React.FC<AuthProviderProps> = ({ children }) => {
+const AuthProviderInner: React.FC<AuthProviderProps> = ({children}) => {
   const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(
-    authService.isAuthenticated()
+    authService.isAuthenticated(),
   );
 
   useEffect(() => {
@@ -50,7 +32,7 @@ const AuthProviderInner: React.FC<AuthProviderProps> = ({ children }) => {
         try {
           const userData = await authService.getCurrentUser();
           setUser(userData);
-        } catch (error) {
+        } catch {
           authService.logout();
           setIsAuthenticated(false);
         }
@@ -58,7 +40,7 @@ const AuthProviderInner: React.FC<AuthProviderProps> = ({ children }) => {
       setLoading(false);
     };
 
-    loadUser();
+    void loadUser();
   }, []);
 
   const login = async (credentials: LoginRequest) => {
@@ -71,14 +53,14 @@ const AuthProviderInner: React.FC<AuthProviderProps> = ({ children }) => {
 
   const register = async (userData: RegisterRequest) => {
     await authService.register(userData);
-    await login({ email: userData.email, password: userData.password });
+    await login({email: userData.email, password: userData.password});
   };
 
   const logout = () => {
     authService.logout();
     setUser(null);
     setIsAuthenticated(false);
-    navigate('/login');
+    void navigate('/login');
   };
 
   const refreshUserData = async () => {
@@ -101,6 +83,6 @@ const AuthProviderInner: React.FC<AuthProviderProps> = ({ children }) => {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
-export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+export const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
   return <AuthProviderInner>{children}</AuthProviderInner>;
 };
