@@ -1,14 +1,16 @@
-import {useCallback, useEffect, useState} from 'react';
+import {useCallback, useEffect, useRef, useState} from 'react';
 import {useNavigate} from 'react-router-dom';
+import AvisoFinalizacion from '../components/AvisoFinalizacion';
 import {
   ESTADOS,
   confirmarCancelacion,
+  detectarFinalizados,
   enCurso,
   etiquetaEtapa,
   jobService,
   mensajeDeError,
 } from '../services/jobService';
-import type {EstadoTrabajo, JobDetail} from '../services/jobService';
+import type {Aviso, EstadoTrabajo, JobDetail} from '../services/jobService';
 
 /** Retraso maximo del estado mostrado (criterio de Pb-2: 3 s). */
 const INTERVALO_ACTUALIZACION_MS = 3000;
@@ -120,10 +122,19 @@ export default function MisProcesamientos() {
   const navigate = useNavigate();
   const [trabajos, setTrabajos] = useState<JobDetail[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [avisos, setAvisos] = useState<Aviso[]>([]);
+  const anteriores = useRef<JobDetail[] | null>(null);
 
   const cargar = useCallback(async () => {
     try {
-      setTrabajos(await jobService.listJobs());
+      const actuales = await jobService.listJobs();
+      // Aviso de finalizacion (Pb-4) para los trabajos que acaban de terminar
+      if (anteriores.current) {
+        const nuevos = detectarFinalizados(anteriores.current, actuales);
+        if (nuevos.length > 0) setAvisos(previos => [...nuevos, ...previos]);
+      }
+      anteriores.current = actuales;
+      setTrabajos(actuales);
       setError(null);
     } catch (e) {
       setError(
@@ -160,8 +171,16 @@ export default function MisProcesamientos() {
     return () => window.clearInterval(temporizador);
   }, [hayEnCurso, cargar]);
 
+  const cerrarAviso = (jobId: string) =>
+    setAvisos(previos => previos.filter(aviso => aviso.jobId !== jobId));
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
+      <AvisoFinalizacion
+        avisos={avisos}
+        onAbrir={id => void navigate(`/resultado/${id}`)}
+        onCerrar={cerrarAviso}
+      />
       <div className="max-w-7xl mx-auto px-6 pt-12 pb-8 flex items-center justify-between">
         <h1 className="text-4xl font-bold text-white">Mis procesamientos</h1>
         <button

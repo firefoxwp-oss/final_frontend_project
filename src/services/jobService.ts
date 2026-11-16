@@ -259,3 +259,34 @@ export const jobService = {
     guardarBlob(res.data as Blob, nombre);
   },
 };
+
+/** Aviso de un trabajo que termino mientras el usuario estaba en la web. */
+export interface Aviso {
+  jobId: string;
+  archivo: string;
+  terminado: boolean;
+}
+
+/**
+ * Trabajos que estaban en cola o en proceso y ahora terminaron (bien o con
+ * error), comparando dos consultas sucesivas del estado.
+ */
+export const detectarFinalizados = (
+  anteriores: JobDetail[],
+  actuales: JobDetail[],
+): Aviso[] => {
+  const enCursoAntes = new Set(
+    anteriores.filter(job => enCurso(job.status)).map(job => job.id),
+  );
+  return actuales
+    .filter(
+      job =>
+        enCursoAntes.has(job.id) &&
+        (job.status === 'done' || job.status === 'error'),
+    )
+    .map(job => ({
+      jobId: job.id,
+      archivo: job.source_filename,
+      terminado: job.status === 'done',
+    }));
+};
