@@ -28,6 +28,12 @@ export interface TrabajoEncolado {
   status: EstadoTrabajo;
 }
 
+/** Pide confirmacion antes de cancelar (regla de Pb-3). */
+export const confirmarCancelacion = (nombreArchivo: string): boolean =>
+  window.confirm(
+    `¿Cancelar el procesamiento de "${nombreArchivo}"? Si ya empezó, se detendrá y se borrarán sus archivos.`,
+  );
+
 /** Un trabajo sigue en curso mientras espera en la cola o se procesa. */
 export const enCurso = (estado: EstadoTrabajo): boolean =>
   estado === 'queued' || estado === 'running';
@@ -208,6 +214,11 @@ export const jobService = {
           : undefined,
     });
     return res.data;
+  },
+
+  /** Cancela un trabajo en cola o en proceso (Pb-3). */
+  async cancelarTrabajo(jobId: string): Promise<void> {
+    await apiClient.post(`/jobs/${encodeURIComponent(jobId)}/cancelar`);
   },
 
   async deleteJob(jobId: string): Promise<void> {

@@ -7,6 +7,7 @@ import {
   mensajeDeError,
   etiquetaEtapa,
   enCurso,
+  confirmarCancelacion,
 } from '../services/jobService';
 import type {JobDetail} from '../services/jobService';
 
@@ -29,6 +30,18 @@ export default function ResultPage() {
   const pollRef = useRef<number | null>(null);
 
   const volver = useCallback(() => navigate('/'), [navigate]);
+
+  const cancelar = async (detalle: JobDetail) => {
+    if (!confirmarCancelacion(detalle.source_filename)) return;
+    try {
+      await jobService.cancelarTrabajo(detalle.id);
+      void navigate('/procesamientos');
+    } catch (e) {
+      setError(
+        await mensajeDeError(e, 'No se pudo cancelar el procesamiento.'),
+      );
+    }
+  };
 
   const cargar = useCallback(async () => {
     if (!jobId) return null;
@@ -108,7 +121,7 @@ export default function ResultPage() {
         progress={job.progress}
         stageLabel={etiquetaEtapa(job.stage)}
         aviso="Puedes cerrar esta página: el procesamiento continúa en el servidor y lo encontrarás en tu proyecto."
-        onCancel={volver}
+        onCancel={() => void cancelar(job)}
       />
     );
   }
