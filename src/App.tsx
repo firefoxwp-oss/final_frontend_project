@@ -4,6 +4,7 @@ import {LoginPage} from './pages/LoginPage';
 import {ProtectedRoute} from './components/ProtectedRoute';
 import ProjectsPage from './pages/ProjectsPage';
 import ResultPage from './pages/ResultPage';
+import MisProcesamientos from './pages/MisProcesamientos';
 
 function App() {
   return (
@@ -30,6 +31,15 @@ function App() {
         element={
           <ProtectedRoute>
             <ResultPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/procesamientos"
+        element={
+          <ProtectedRoute>
+            <MisProcesamientos />
           </ProtectedRoute>
         }
       />

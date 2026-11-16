@@ -45,11 +45,24 @@ export interface JobDetail {
   duration_seconds: number | null;
   error: string | null;
   created_at: string;
+  started_at: string | null;
+  finished_at: string | null;
+  /** Posicion en la cola (1 = el siguiente); null si ya no espera. */
+  queue_position: number | null;
   artifacts: Record<string, boolean>;
 }
 
 export type JobSummary = JobDetail;
 export type JobStatus = JobDetail;
+
+/** Etiquetas legibles de cada estado de un trabajo. */
+export const ESTADOS: Record<EstadoTrabajo, string> = {
+  queued: 'En cola',
+  running: 'Procesando',
+  done: 'Terminado',
+  error: 'Error',
+  cancelled: 'Cancelado',
+};
 
 /** Etiquetas legibles para cada etapa real del pipeline. */
 export const ETAPAS: Record<string, string> = {
