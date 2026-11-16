@@ -9,6 +9,9 @@ import {
 } from '../services/jobService';
 import type {EstadoTrabajo, JobDetail} from '../services/jobService';
 
+/** Retraso maximo del estado mostrado (criterio de Pb-2: 3 s). */
+const INTERVALO_ACTUALIZACION_MS = 3000;
+
 const COLOR_ESTADO: Record<EstadoTrabajo, string> = {
   queued: 'bg-gray-600 text-gray-100',
   running: 'bg-blue-600 text-white',
@@ -75,9 +78,10 @@ const TarjetaTrabajo = ({
             style={{width: `${job.progress}%`}}
           ></div>
         </div>
-        <p className="text-right text-gray-300 text-sm mt-1">
-          {job.progress} %
-        </p>
+        <div className="flex justify-between text-sm mt-1">
+          <span className="text-gray-400">Se actualiza automáticamente</span>
+          <span className="text-gray-300">{job.progress} %</span>
+        </div>
       </div>
     )}
 
@@ -120,6 +124,17 @@ export default function MisProcesamientos() {
   useEffect(() => {
     void cargar();
   }, [cargar]);
+
+  // Mientras haya trabajos en cola o en proceso, el estado se consulta cada
+  // pocos segundos; se pausa si la pestana no esta visible.
+  const hayEnCurso = trabajos?.some(job => enCurso(job.status)) ?? false;
+  useEffect(() => {
+    if (!hayEnCurso) return;
+    const temporizador = window.setInterval(() => {
+      if (document.visibilityState === 'visible') void cargar();
+    }, INTERVALO_ACTUALIZACION_MS);
+    return () => window.clearInterval(temporizador);
+  }, [hayEnCurso, cargar]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
