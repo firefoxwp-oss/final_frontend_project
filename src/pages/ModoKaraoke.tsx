@@ -1,4 +1,4 @@
-import {useEffect, useState} from 'react';
+import {useEffect, useRef, useState} from 'react';
 import {useNavigate, useParams} from 'react-router-dom';
 import ReproductorKaraoke from '../components/ReproductorKaraoke';
 import {jobService, mensajeDeError} from '../services/jobService';
@@ -17,6 +17,24 @@ export default function ModoKaraoke() {
   const [error, setError] = useState<string | null>(null);
   const [lineas, setLineas] = useState<LineaLetra[]>([]);
   const [letraLista, setLetraLista] = useState(false);
+  const reproductor = useRef<HTMLDivElement>(null);
+  const [completa, setCompleta] = useState(false);
+
+  // La pantalla completa muestra solo la letra y los controles (Pb-5)
+  useEffect(() => {
+    const cambio = () =>
+      setCompleta(document.fullscreenElement === reproductor.current);
+    document.addEventListener('fullscreenchange', cambio);
+    return () => document.removeEventListener('fullscreenchange', cambio);
+  }, []);
+
+  const alternarPantallaCompleta = () => {
+    if (document.fullscreenElement) {
+      void document.exitFullscreen();
+    } else {
+      void reproductor.current?.requestFullscreen();
+    }
+  };
 
   // abrir(job_id): datos de la cancion y obtenerLetra(job_id)
   useEffect(() => {
@@ -60,7 +78,11 @@ export default function ModoKaraoke() {
             >
               Volver
             </button>
-            <button className="border-2 border-blue-400 text-blue-200 hover:bg-blue-500 hover:text-white font-semibold px-4 py-2 rounded-lg">
+            <button
+              onClick={alternarPantallaCompleta}
+              disabled={!letraLista}
+              className="border-2 border-blue-400 text-blue-200 hover:bg-blue-500 hover:text-white disabled:opacity-50 font-semibold px-4 py-2 rounded-lg"
+            >
               Pantalla completa
             </button>
           </div>
@@ -73,11 +95,28 @@ export default function ModoKaraoke() {
         ) : (
           jobId &&
           job && (
-            <ReproductorKaraoke
-              jobId={jobId}
-              lineas={lineas}
-              letraLista={letraLista}
-            />
+            <div
+              ref={reproductor}
+              className={
+                completa
+                  ? 'bg-gray-950 h-screen w-screen px-10 py-8 flex flex-col justify-center overflow-auto'
+                  : ''
+              }
+            >
+              {completa && (
+                <button
+                  onClick={alternarPantallaCompleta}
+                  className="self-end mb-4 bg-gray-700 hover:bg-gray-600 text-white text-sm px-4 py-2 rounded-lg"
+                >
+                  Salir de pantalla completa
+                </button>
+              )}
+              <ReproductorKaraoke
+                jobId={jobId}
+                lineas={lineas}
+                letraLista={letraLista}
+              />
+            </div>
           )
         )}
       </div>
