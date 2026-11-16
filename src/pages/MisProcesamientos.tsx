@@ -2,6 +2,7 @@ import {useCallback, useEffect, useState} from 'react';
 import {useNavigate} from 'react-router-dom';
 import {
   ESTADOS,
+  confirmarCancelacion,
   enCurso,
   etiquetaEtapa,
   jobService,
@@ -44,9 +45,11 @@ const detalle = (job: JobDetail): string => {
 const TarjetaTrabajo = ({
   job,
   onAbrir,
+  onCancelar,
 }: {
   job: JobDetail;
   onAbrir: (id: string) => void;
+  onCancelar: (job: JobDetail) => void;
 }) => (
   <div className="bg-gray-800 border border-gray-700 rounded-lg p-6 shadow-lg flex flex-col gap-4">
     <p
@@ -89,6 +92,14 @@ const TarjetaTrabajo = ({
       <span className="text-gray-400 text-xs">
         {new Date(job.created_at).toLocaleString()}
       </span>
+      {enCurso(job.status) && (
+        <button
+          onClick={() => onCancelar(job)}
+          className="border-2 border-blue-500 text-blue-300 hover:bg-blue-500 hover:text-white text-sm font-semibold px-4 py-2 rounded-lg"
+        >
+          Cancelar
+        </button>
+      )}
       {job.status === 'done' && (
         <button
           onClick={() => onAbrir(job.id)}
@@ -124,6 +135,19 @@ export default function MisProcesamientos() {
   useEffect(() => {
     void cargar();
   }, [cargar]);
+
+  // Diagrama de secuencia de Pb-3: MisProcesamientos.cancelar(job_id)
+  const cancelar = async (job: JobDetail) => {
+    if (!confirmarCancelacion(job.source_filename)) return;
+    try {
+      await jobService.cancelarTrabajo(job.id);
+      await cargar();
+    } catch (e) {
+      setError(
+        await mensajeDeError(e, 'No se pudo cancelar el procesamiento.'),
+      );
+    }
+  };
 
   // Mientras haya trabajos en cola o en proceso, el estado se consulta cada
   // pocos segundos; se pausa si la pestana no esta visible.
@@ -172,6 +196,7 @@ export default function MisProcesamientos() {
                 key={job.id}
                 job={job}
                 onAbrir={id => void navigate(`/resultado/${id}`)}
+                onCancelar={j => void cancelar(j)}
               />
             ))}
           </div>
