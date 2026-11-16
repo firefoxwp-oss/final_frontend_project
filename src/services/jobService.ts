@@ -15,12 +15,29 @@ export type MediaKind =
   | 'subtitulos_srt'
   | 'subtitulos_ass';
 
+/** Estados de un trabajo de procesamiento (la cola vive en el servidor). */
+export type EstadoTrabajo =
+  'queued' | 'running' | 'done' | 'error' | 'cancelled';
+
+/** Tipo de video que se pide al subir el archivo. */
+export type TipoVideo = 'karaoke' | 'instrumental';
+
+/** Respuesta de la subida: el trabajo queda en la cola del servidor. */
+export interface TrabajoEncolado {
+  job_id: string;
+  status: EstadoTrabajo;
+}
+
+/** Un trabajo sigue en curso mientras espera en la cola o se procesa. */
+export const enCurso = (estado: EstadoTrabajo): boolean =>
+  estado === 'queued' || estado === 'running';
+
 /** Detalle completo de un procesamiento (el backend devuelve lo mismo en
  *  `GET /jobs` y en `GET /jobs/{id}`, para poder reabrirlo desde el historial). */
 export interface JobDetail {
   id: string;
   source_filename: string;
-  status: 'running' | 'done' | 'error';
+  status: EstadoTrabajo;
   stage: string | null;
   progress: number;
   video_type: 'karaoke' | 'instrumental' | null;
@@ -36,6 +53,7 @@ export type JobStatus = JobDetail;
 
 /** Etiquetas legibles para cada etapa real del pipeline. */
 export const ETAPAS: Record<string, string> = {
+  en_cola: 'En cola, esperando su turno',
   recibiendo: 'Recibiendo el archivo',
   extrayendo_audio: 'Extrayendo el audio',
   separando_voces: 'Separando voces y música',
@@ -117,16 +135,6 @@ export const mensajeDeError = async (
   return detalle || err?.message || porDefecto;
 };
 
-/** Dispara la descarga de una URL ya existente (por ejemplo un object URL). */
-export const guardarDesdeUrl = (url: string, nombre: string) => {
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = nombre;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-};
-
 const guardarBlob = (blob: Blob, nombre: string) => {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -139,6 +147,41 @@ const guardarBlob = (blob: Blob, nombre: string) => {
 };
 
 export const jobService = {
+  /**
+   * Sube el archivo y lo deja en la cola del servidor.
+   *
+   * Responde en cuanto termina la subida, con el id del trabajo: el
+   * procesamiento continua en el servidor aunque se cierre el navegador.
+   */
+  async subirVideo(
+    archivo: File,
+    tipoVideo: TipoVideo,
+    projectId: number | null,
+    opciones: {
+      signal?: AbortSignal;
+      onProgreso?: (porcentaje: number) => void;
+    } = {},
+  ): Promise<TrabajoEncolado> {
+    const formData = new FormData();
+    formData.append('file', archivo);
+    formData.append('video_type', tipoVideo);
+    if (projectId !== null) formData.append('project_id', String(projectId));
+
+    const res = await apiClient.post('/procesar-video/', formData, {
+      // El cliente por defecto envia JSON: un formulario necesita multipart
+      headers: {'Content-Type': 'multipart/form-data'},
+      signal: opciones.signal,
+      onUploadProgress: evento => {
+        if (evento.total) {
+          opciones.onProgreso?.(
+            Math.round((evento.loaded * 100) / evento.total),
+          );
+        }
+      },
+    });
+    return res.data;
+  },
+
   async getStatus(jobId: string): Promise<JobDetail> {
     const res = await apiClient.get(`/jobs/${encodeURIComponent(jobId)}`);
     return res.data;

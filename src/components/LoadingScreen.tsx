@@ -7,6 +7,8 @@ interface LoadingScreenProps {
   progress?: number;
   /** Etapa actual del pipeline, en texto legible. */
   stageLabel?: string;
+  /** Mensaje adicional bajo el progreso. */
+  aviso?: string;
   onCancel?: () => void;
 }
 
@@ -15,6 +17,7 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({
   fileName,
   progress = 0,
   stageLabel = 'Procesando tu vídeo',
+  aviso,
   onCancel,
 }) => {
   if (!loading) {
@@ -210,6 +213,8 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({
                     style={{width: `${Math.min(100, Math.max(2, progress))}%`}}
                   ></div>
                 </div>
+
+                {aviso && <p className="text-gray-400 text-sm">{aviso}</p>}
 
                 {/* Botón de cancelar */}
                 <div className="flex justify-center mt-4">

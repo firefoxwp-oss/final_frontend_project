@@ -6,6 +6,7 @@ import {
   jobService,
   mensajeDeError,
   etiquetaEtapa,
+  enCurso,
 } from '../services/jobService';
 import type {JobDetail} from '../services/jobService';
 
@@ -15,8 +16,9 @@ const sinExtension = (nombre: string) => {
 };
 
 /**
- * Reabre un procesamiento ya terminado desde el historial de proyectos,
- * con la misma vista que se muestra justo al acabar de procesar.
+ * Sigue un procesamiento mientras espera en la cola o se procesa, y muestra
+ * sus resultados al terminar. Tambien reabre un procesamiento terminado
+ * desde el historial de proyectos.
  */
 export default function ResultPage() {
   const {jobId} = useParams<{jobId: string}>();
@@ -46,15 +48,11 @@ export default function ResultPage() {
 
     void (async () => {
       const detalle = await cargar();
-      // Si el trabajo sigue en marcha, se sigue su progreso hasta que termine.
-      if (vivo && detalle?.status === 'running') {
+      // Si el trabajo sigue en curso, se sigue su progreso hasta que termine.
+      if (vivo && detalle && enCurso(detalle.status)) {
         pollRef.current = window.setInterval(async () => {
           const actual = await cargar();
-          if (
-            actual &&
-            actual.status !== 'running' &&
-            pollRef.current !== null
-          ) {
+          if (actual && !enCurso(actual.status) && pollRef.current !== null) {
             window.clearInterval(pollRef.current);
             pollRef.current = null;
           }
@@ -102,13 +100,14 @@ export default function ResultPage() {
     );
   }
 
-  if (job.status === 'running') {
+  if (enCurso(job.status)) {
     return (
       <LoadingScreen
         loading
         fileName={job.source_filename}
         progress={job.progress}
         stageLabel={etiquetaEtapa(job.stage)}
+        aviso="Puedes cerrar esta página: el procesamiento continúa en el servidor y lo encontrarás en tu proyecto."
         onCancel={volver}
       />
     );
