@@ -3,6 +3,8 @@ import {useNavigate, useParams} from 'react-router-dom';
 import ReproductorKaraoke from '../components/ReproductorKaraoke';
 import {jobService, mensajeDeError} from '../services/jobService';
 import type {JobDetail} from '../services/jobService';
+import {karaokeService} from '../services/karaokeService';
+import type {LineaLetra} from '../services/karaokeService';
 
 /**
  * Modo Karaoke en la web (Pb-5 y Pb-6): reproduce el instrumental con la
@@ -13,21 +15,33 @@ export default function ModoKaraoke() {
   const navigate = useNavigate();
   const [job, setJob] = useState<JobDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [lineas, setLineas] = useState<LineaLetra[]>([]);
+  const [letraLista, setLetraLista] = useState(false);
 
+  // abrir(job_id): datos de la cancion y obtenerLetra(job_id)
   useEffect(() => {
     if (!jobId) return;
     void (async () => {
       try {
         const detalle = await jobService.getStatus(jobId);
+        setJob(detalle);
         if (detalle.status !== 'done' || detalle.video_type !== 'karaoke') {
           setError(
             'El Modo Karaoke solo está disponible para canciones karaoke terminadas.',
           );
+          return;
         }
-        setJob(detalle);
       } catch (e) {
         setError(await mensajeDeError(e, 'No se pudo abrir la canción.'));
+        return;
       }
+      try {
+        setLineas((await karaokeService.obtenerLetra(jobId)).lineas);
+      } catch {
+        // Sin letra la cancion igual se puede reproducir
+        setLineas([]);
+      }
+      setLetraLista(true);
     })();
   }, [jobId]);
 
@@ -57,17 +71,14 @@ export default function ModoKaraoke() {
             {error}
           </div>
         ) : (
-          <ReproductorKaraoke
-            lineas={[]}
-            posicion={0}
-            duracion={0}
-            reproduciendo={false}
-            volumenVoz={30}
-            listo={false}
-            onReproducir={() => {}}
-            onBuscar={() => {}}
-            onVolumenVoz={() => {}}
-          />
+          jobId &&
+          job && (
+            <ReproductorKaraoke
+              jobId={jobId}
+              lineas={lineas}
+              letraLista={letraLista}
+            />
+          )
         )}
       </div>
     </div>
