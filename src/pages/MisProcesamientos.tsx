@@ -47,10 +47,12 @@ const detalle = (job: JobDetail): string => {
 const TarjetaTrabajo = ({
   job,
   onAbrir,
+  onCantar,
   onCancelar,
 }: {
   job: JobDetail;
   onAbrir: (id: string) => void;
+  onCantar: (id: string) => void;
   onCancelar: (job: JobDetail) => void;
 }) => (
   <div className="bg-gray-800 border border-gray-700 rounded-lg p-6 shadow-lg flex flex-col gap-4">
@@ -100,6 +102,14 @@ const TarjetaTrabajo = ({
           className="border-2 border-blue-500 text-blue-300 hover:bg-blue-500 hover:text-white text-sm font-semibold px-4 py-2 rounded-lg"
         >
           Cancelar
+        </button>
+      )}
+      {job.status === 'done' && job.video_type === 'karaoke' && (
+        <button
+          onClick={() => onCantar(job.id)}
+          className="ml-auto mr-2 bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 rounded-lg"
+        >
+          Cantar
         </button>
       )}
       {job.status === 'done' && (
@@ -215,6 +225,7 @@ export default function MisProcesamientos() {
                 key={job.id}
                 job={job}
                 onAbrir={id => void navigate(`/resultado/${id}`)}
+                onCantar={id => void navigate(`/karaoke/${id}`)}
                 onCancelar={j => void cancelar(j)}
               />
             ))}
