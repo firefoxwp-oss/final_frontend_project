@@ -3,13 +3,17 @@ import {Pause, Play} from 'lucide-react';
 import {
   MotorKaraoke,
   formatoTiempo,
+  guardarVozGuia,
   karaokeService,
+  leerVozGuia,
   lineaActual,
 } from '../services/karaokeService';
 import type {LineaLetra, PistaKaraoke} from '../services/karaokeService';
 
-/** Pistas que se reproducen en el Modo Karaoke. */
-const PISTAS: PistaKaraoke[] = ['audio_instrumental'];
+/** Pistas del Modo Karaoke: el instrumental y la voz guia, mezcladas en el
+ * navegador sin procesamiento adicional en el servidor (Pb-6). */
+const PISTAS: PistaKaraoke[] = ['instrumental_comprimido', 'voz_comprimida'];
+const VOZ = 1;
 
 /** Linea de la letra; en la actual se resaltan las palabras ya cantadas. */
 const Linea = ({
@@ -64,6 +68,7 @@ export default function ReproductorKaraoke({
   const [posicion, setPosicion] = useState(0);
   const [duracion, setDuracion] = useState(0);
   const [reproduciendo, setReproduciendo] = useState(false);
+  const [volumenVoz, setVolumenVoz] = useState(leerVozGuia);
 
   // cargar(pistas, letra): descarga y decodifica las pistas de la cancion
   useEffect(() => {
@@ -75,7 +80,7 @@ export default function ReproductorKaraoke({
         const datos = await Promise.all(
           PISTAS.map(p => karaokeService.obtenerPista(jobId, p)),
         );
-        await nuevo.cargar(datos, [1]);
+        await nuevo.cargar(datos, [1, leerVozGuia() / 100]);
         if (!vigente) return;
         setDuracion(nuevo.duracion);
         setListo(true);
@@ -128,6 +133,13 @@ export default function ReproductorKaraoke({
     await m.buscar(segundos);
     setPosicion(m.posicion());
   }, []);
+
+  // cambiarVolumenVoz(nivel): se aplica sin cortar la reproduccion (RR-08)
+  const cambiarVolumenVoz = (nivel: number) => {
+    setVolumenVoz(nivel);
+    motor.current?.volumen(VOZ, nivel / 100);
+    guardarVozGuia(nivel);
+  };
 
   const indice = lineaActual(lineas, posicion);
   return (
@@ -194,13 +206,13 @@ export default function ReproductorKaraoke({
           type="range"
           min={0}
           max={100}
-          value={30}
-          disabled
-          readOnly
+          value={volumenVoz}
+          disabled={!listo}
+          onChange={e => cambiarVolumenVoz(Number(e.target.value))}
           aria-label="Volumen de la voz guía"
           className="w-64 accent-blue-500"
         />
-        <span className="text-gray-200 text-sm">30 %</span>
+        <span className="text-gray-200 text-sm">{volumenVoz} %</span>
       </div>
       <p className="text-gray-400 text-sm">
         La palabra resaltada sigue la posición del audio.

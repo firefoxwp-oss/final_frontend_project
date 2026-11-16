@@ -19,8 +19,31 @@ export interface Letra {
   lineas: LineaLetra[];
 }
 
-/** Pista de audio que se pide al servicio de descarga. */
-export type PistaKaraoke = 'audio_instrumental';
+/** Pistas comprimidas que se piden al servicio de descarga (Pb-6). */
+export type PistaKaraoke = 'instrumental_comprimido' | 'voz_comprimida';
+
+const CLAVE_VOZ_GUIA = 'karaoke.vozGuia';
+/** Volumen inicial de la voz guia (regla de Pb-6). */
+export const VOZ_GUIA_INICIAL = 30;
+
+/** Ultimo nivel de voz guia elegido en este navegador, de 0 a 100. */
+export const leerVozGuia = (): number => {
+  try {
+    const valor = Number(localStorage.getItem(CLAVE_VOZ_GUIA));
+    const guardado = localStorage.getItem(CLAVE_VOZ_GUIA) !== null;
+    return guardado && valor >= 0 && valor <= 100 ? valor : VOZ_GUIA_INICIAL;
+  } catch {
+    return VOZ_GUIA_INICIAL;
+  }
+};
+
+export const guardarVozGuia = (valor: number): void => {
+  try {
+    localStorage.setItem(CLAVE_VOZ_GUIA, String(valor));
+  } catch {
+    // Sin almacenamiento el nivel vuelve al inicial la proxima vez
+  }
+};
 
 /**
  * Indice de la linea que corresponde a la posicion del audio: la que se esta
