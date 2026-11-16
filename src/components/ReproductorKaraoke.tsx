@@ -34,6 +34,7 @@ const Linea = ({
       {linea.palabras.map((palabra, i) => (
         <span
           key={i}
+          data-inicio={palabra.inicio}
           data-cantada={posicion >= palabra.inicio}
           className={posicion >= palabra.inicio ? 'text-sky-400' : 'text-white'}
         >
