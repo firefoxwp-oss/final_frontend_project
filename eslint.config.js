@@ -10,9 +10,14 @@ export default defineConfig([
   globalIgnores(['dist']),
   ...gts,
   {
-    // Este archivo y los de configuracion son modulos ES, no CommonJS
-    files: ['eslint.config.js', '*.config.js'],
+    // Este archivo, los de configuracion y las pruebas son modulos ES de Node
+    files: ['eslint.config.js', '*.config.js', 'pruebas/**/*.mjs'],
     languageOptions: {sourceType: 'module', globals: globals.node},
+  },
+  {
+    // Las pruebas ejecutan funciones dentro del navegador
+    files: ['pruebas/**/*.mjs'],
+    languageOptions: {globals: {...globals.node, ...globals.browser}},
   },
   {
     files: ['**/*.{ts,tsx}'],
