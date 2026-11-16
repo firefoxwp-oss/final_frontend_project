@@ -142,12 +142,20 @@ export default function ProjectsPage() {
             </p>
           </div>
 
-          <button
-            onClick={logout}
-            className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg"
-          >
-            Cerrar sesión
-          </button>
+          <div className="flex gap-3">
+            <button
+              onClick={() => void navigate('/procesamientos')}
+              className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg"
+            >
+              Mis procesamientos
+            </button>
+            <button
+              onClick={logout}
+              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg"
+            >
+              Cerrar sesión
+            </button>
+          </div>
         </div>
       </div>
 
