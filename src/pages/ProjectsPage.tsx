@@ -1,29 +1,29 @@
-import { useCallback, useEffect, useState } from "react";
-import { useAuth } from "../context/AuthContext";
-import { projectService } from "../services/projectService";
-import type { Project } from "../services/projectService";
-import { jobService, mensajeDeError } from "../services/jobService";
-import type { JobSummary } from "../services/jobService";
-import { useNavigate } from "react-router-dom";
+import {useCallback, useEffect, useState} from 'react';
+import {useAuth} from '../context/useAuth';
+import {projectService} from '../services/projectService';
+import type {Project} from '../services/projectService';
+import {jobService, mensajeDeError} from '../services/jobService';
+import type {JobSummary} from '../services/jobService';
+import {useNavigate} from 'react-router-dom';
 
 export default function ProjectsPage() {
-  const { user, logout } = useAuth();
+  const {user, logout} = useAuth();
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
-  const [name, setName] = useState("");
+  const [name, setName] = useState('');
   const [error, setError] = useState<string | null>(null);
 
   const navigate = useNavigate();
 
   const [editingProject, setEditingProject] = useState<Project | null>(null);
-  const [editName, setEditName] = useState("");
+  const [editName, setEditName] = useState('');
 
   // Historial de procesamientos por proyecto
   const [jobs, setJobs] = useState<JobSummary[]>([]);
   const [abierto, setAbierto] = useState<number | null>(null);
 
   const openProject = (id: number) => {
-    navigate("/upload", { state: { projectId: id } });
+    void navigate('/upload', {state: {projectId: id}});
   };
 
   // Reabre un procesamiento con la misma vista que al terminarlo
@@ -36,7 +36,7 @@ export default function ProjectsPage() {
       const data = await projectService.getProjects(user.id);
       setProjects(data);
     } catch (e) {
-      setError(await mensajeDeError(e, "No se pudieron cargar los proyectos."));
+      setError(await mensajeDeError(e, 'No se pudieron cargar los proyectos.'));
     } finally {
       setLoading(false);
     }
@@ -65,20 +65,20 @@ export default function ProjectsPage() {
         user_id: user.id,
       });
       setProjects([newProject, ...projects]);
-      setName("");
+      setName('');
     } catch (e) {
-      setError(await mensajeDeError(e, "No se pudo crear el proyecto."));
+      setError(await mensajeDeError(e, 'No se pudo crear el proyecto.'));
     }
   };
 
   const deleteProject = async (id: number) => {
-    if (!confirm("¿Estás seguro de eliminar este proyecto?")) return;
+    if (!confirm('¿Estás seguro de eliminar este proyecto?')) return;
     try {
       setError(null);
       await projectService.deleteProject(id);
-      setProjects(projects.filter((p) => p.id !== id));
+      setProjects(projects.filter(p => p.id !== id));
     } catch (e) {
-      setError(await mensajeDeError(e, "No se pudo eliminar el proyecto."));
+      setError(await mensajeDeError(e, 'No se pudo eliminar el proyecto.'));
     }
   };
 
@@ -94,24 +94,29 @@ export default function ProjectsPage() {
       const updated = await projectService.updateProject(editingProject.id, {
         name: editName.trim(),
       });
-      setProjects(projects.map((p) => (p.id === editingProject.id ? updated : p)));
+      setProjects(
+        projects.map(p => (p.id === editingProject.id ? updated : p)),
+      );
       setEditingProject(null);
     } catch (e) {
-      setError(await mensajeDeError(e, "No se pudo guardar el cambio."));
+      setError(await mensajeDeError(e, 'No se pudo guardar el cambio.'));
     }
   };
 
   const borrarJob = async (jobId: string) => {
-    if (!confirm("¿Eliminar este procesamiento y sus archivos?")) return;
+    if (!confirm('¿Eliminar este procesamiento y sus archivos?')) return;
     try {
       await jobService.deleteJob(jobId);
-      setJobs(jobs.filter((j) => j.id !== jobId));
+      setJobs(jobs.filter(j => j.id !== jobId));
     } catch (e) {
-      setError(await mensajeDeError(e, "No se pudo eliminar el procesamiento."));
+      setError(
+        await mensajeDeError(e, 'No se pudo eliminar el procesamiento.'),
+      );
     }
   };
 
-  const jobsDe = (projectId: number) => jobs.filter((j) => j.project_id === projectId);
+  const jobsDe = (projectId: number) =>
+    jobs.filter(j => j.project_id === projectId);
 
   // Las descargas van por axios (cabecera Authorization con renovacion
   // automatica): si fallan, se muestra el motivo en vez de un JSON crudo.
@@ -120,7 +125,7 @@ export default function ProjectsPage() {
       setError(null);
       await jobService.descargarTodo(jobId, nombre);
     } catch (e) {
-      setError(await mensajeDeError(e, "No se pudo preparar el ZIP."));
+      setError(await mensajeDeError(e, 'No se pudo preparar el ZIP.'));
     }
   };
 
@@ -129,18 +134,28 @@ export default function ProjectsPage() {
       <div className="pt-12 pb-8">
         <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
           <div className="text-left">
-            <h1 className="text-4xl font-bold text-white mb-1">Tus Proyectos</h1>
+            <h1 className="text-4xl font-bold text-white mb-1">
+              Tus Proyectos
+            </h1>
             <p className="text-gray-300 text-lg">
               Gestiona tus proyectos antes de procesar archivos.
             </p>
           </div>
 
-          <button
-            onClick={logout}
-            className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg"
-          >
-            Cerrar sesión
-          </button>
+          <div className="flex gap-3">
+            <button
+              onClick={() => void navigate('/procesamientos')}
+              className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg"
+            >
+              Mis procesamientos
+            </button>
+            <button
+              onClick={logout}
+              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg"
+            >
+              Cerrar sesión
+            </button>
+          </div>
         </div>
       </div>
 
@@ -152,15 +167,17 @@ export default function ProjectsPage() {
         )}
 
         <div className="bg-gray-800 rounded-lg p-6 shadow-lg mb-10 border border-gray-700">
-          <h2 className="text-white text-xl font-semibold mb-4">Crear Proyecto</h2>
+          <h2 className="text-white text-xl font-semibold mb-4">
+            Crear Proyecto
+          </h2>
 
           <div className="flex space-x-3">
             <input
               type="text"
               placeholder="Nombre del proyecto"
               value={name}
-              onChange={(e) => setName(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && void createProject()}
+              onChange={e => setName(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && void createProject()}
               className="w-full px-3 py-2 rounded-md bg-gray-700 text-white border border-gray-600"
             />
             <button
@@ -178,16 +195,21 @@ export default function ProjectsPage() {
           <p className="text-gray-300 text-lg">No tienes proyectos todavía.</p>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {projects.map((p) => {
+            {projects.map(p => {
               const propios = jobsDe(p.id);
               return (
                 <div
                   key={p.id}
                   className="bg-gray-800 rounded-lg p-6 shadow-lg border border-gray-700 transition"
                 >
-                  <div onClick={() => openProject(p.id)} className="cursor-pointer">
+                  <div
+                    onClick={() => openProject(p.id)}
+                    className="cursor-pointer"
+                  >
                     <div className="w-full h-24 bg-gradient-to-br from-purple-500 to-blue-500 rounded-lg mb-4 flex items-center justify-center">
-                      <span className="text-white text-lg font-semibold">{p.name}</span>
+                      <span className="text-white text-lg font-semibold">
+                        {p.name}
+                      </span>
                     </div>
 
                     <p className="text-gray-300 text-sm text-center">
@@ -215,37 +237,43 @@ export default function ProjectsPage() {
                     onClick={() => setAbierto(abierto === p.id ? null : p.id)}
                     className="mt-3 w-full text-gray-300 hover:text-white text-sm underline underline-offset-4"
                   >
-                    {abierto === p.id ? "Ocultar" : "Ver"} vídeos procesados ({propios.length})
+                    {abierto === p.id ? 'Ocultar' : 'Ver'} vídeos procesados (
+                    {propios.length})
                   </button>
 
                   {abierto === p.id && (
                     <div className="mt-3 space-y-2 max-h-56 overflow-y-auto">
                       {propios.length === 0 ? (
-                        <p className="text-gray-400 text-sm">Sin procesamientos aún.</p>
+                        <p className="text-gray-400 text-sm">
+                          Sin procesamientos aún.
+                        </p>
                       ) : (
-                        propios.map((j) => (
+                        propios.map(j => (
                           <div
                             key={j.id}
                             onClick={() => abrirJob(j.id)}
                             className="bg-gray-700 hover:bg-gray-600 rounded-md p-3 cursor-pointer transition-colors"
                             title="Abrir este vídeo procesado"
                           >
-                            <p className="text-white text-sm truncate" title={j.source_filename}>
+                            <p
+                              className="text-white text-sm truncate"
+                              title={j.source_filename}
+                            >
                               {j.source_filename}
                             </p>
                             <p className="text-gray-400 text-xs mb-2">
-                              {new Date(j.created_at).toLocaleString()} ·{" "}
-                              {j.status === "done"
-                                ? j.video_type === "karaoke"
-                                  ? "Karaoke"
-                                  : "Instrumental"
-                                : j.status === "error"
-                                ? "Error"
-                                : `${j.progress}%`}
+                              {new Date(j.created_at).toLocaleString()} ·{' '}
+                              {j.status === 'done'
+                                ? j.video_type === 'karaoke'
+                                  ? 'Karaoke'
+                                  : 'Instrumental'
+                                : j.status === 'error'
+                                  ? 'Error'
+                                  : `${j.progress}%`}
                             </p>
                             <div
                               className="flex flex-wrap gap-2"
-                              onClick={(e) => e.stopPropagation()}
+                              onClick={e => e.stopPropagation()}
                             >
                               <button
                                 onClick={() => abrirJob(j.id)}
@@ -257,7 +285,7 @@ export default function ProjectsPage() {
                                 onClick={() =>
                                   void descargarZip(
                                     j.id,
-                                    `${j.source_filename}_completo.zip`
+                                    `${j.source_filename}_completo.zip`,
                                   )
                                 }
                                 className="bg-blue-600 hover:bg-blue-700 text-white text-xs px-2 py-1 rounded"
@@ -293,7 +321,12 @@ export default function ProjectsPage() {
           stroke="currentColor"
           viewBox="0 0 24 24"
         >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M19 9l-7 7-7-7"
+          />
         </svg>
       </div>
 
@@ -305,7 +338,7 @@ export default function ProjectsPage() {
             <input
               type="text"
               value={editName}
-              onChange={(e) => setEditName(e.target.value)}
+              onChange={e => setEditName(e.target.value)}
               className="w-full px-3 py-2 rounded-md bg-gray-700 text-white border border-gray-600"
             />
 

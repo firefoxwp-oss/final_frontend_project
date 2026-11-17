@@ -1,66 +1,88 @@
-import React, { useState } from "react";
-import { useAuth } from "../context/AuthContext";
-import { API_BASE_URL } from "../services/authService";
-import type { RegisterRequest } from "../services/authService";
+import React, {useState} from 'react';
+import {useAuth} from '../context/useAuth';
+import {API_BASE_URL} from '../services/authService';
+import type {ErrorHttp} from '../services/authService';
+import type {RegisterRequest} from '../services/authService';
 
 interface RegisterFormProps {
   onToggleMode: () => void;
 }
 
-export const RegisterForm: React.FC<RegisterFormProps> = ({ onToggleMode }) => {
+export const RegisterForm: React.FC<RegisterFormProps> = ({onToggleMode}) => {
   const [formData, setFormData] = useState<RegisterRequest>({
-    name: "",
-    email: "",
-    password: "",
+    name: '',
+    email: '',
+    password: '',
   });
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string>("");
+  const [error, setError] = useState<string>('');
 
-  const { register } = useAuth();
+  const {register} = useAuth();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value,
     });
-    if (error) setError("");
+    if (error) setError('');
   };
 
-  const handleConfirmPasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleConfirmPasswordChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     setConfirmPassword(e.target.value);
-    if (error) setError("");
+    if (error) setError('');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError("");
+    setError('');
 
     if (formData.password !== confirmPassword) {
-      setError("Las contraseñas no coinciden");
+      setError('Las contraseñas no coinciden');
       setLoading(false);
       return;
     }
 
     if (formData.password.length < 6) {
-      setError("La contraseña debe tener al menos 6 caracteres");
+      setError('La contraseña debe tener al menos 6 caracteres');
       setLoading(false);
       return;
     }
 
     try {
       await register(formData);
-    } catch (error: any) {
+    } catch (e) {
+      const error = e as ErrorHttp;
       // Mejorar mensajes de error
-      if (error.code === 'ERR_NETWORK' || error.message?.includes('Network Error') || !error.response) {
-        setError(`Error de conexión. Verifica que el backend esté corriendo en ${API_BASE_URL}`);
-      } else if (error.response?.status === 409 || error.response?.status === 400) {
-        setError(error.response?.data?.detail || "Este email ya está registrado o los datos son inválidos");
+      if (
+        error.code === 'ERR_NETWORK' ||
+        error.message?.includes('Network Error') ||
+        !error.response
+      ) {
+        setError(
+          `Error de conexión. Verifica que el backend esté corriendo en ${API_BASE_URL}`,
+        );
+      } else if (
+        error.response?.status === 409 ||
+        error.response?.status === 400
+      ) {
+        setError(
+          error.response?.data?.detail ||
+            'Este email ya está registrado o los datos son inválidos',
+        );
       } else if (error.response?.status === 422) {
-        setError("Datos inválidos. Verifica el formato del email y que la contraseña tenga al menos 6 caracteres");
+        setError(
+          'Datos inválidos. Verifica el formato del email y que la contraseña tenga al menos 6 caracteres',
+        );
       } else {
-        setError(error.response?.data?.detail || error.message || "Error al crear la cuenta");
+        setError(
+          error.response?.data?.detail ||
+            error.message ||
+            'Error al crear la cuenta',
+        );
       }
     } finally {
       setLoading(false);
@@ -82,7 +104,10 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onToggleMode }) => {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+            <label
+              htmlFor="name"
+              className="block text-sm font-medium text-gray-700"
+            >
               Nombre
             </label>
             <input
@@ -98,7 +123,10 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onToggleMode }) => {
           </div>
 
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+            <label
+              htmlFor="email"
+              className="block text-sm font-medium text-gray-700"
+            >
               Email
             </label>
             <input
@@ -114,7 +142,10 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onToggleMode }) => {
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+            <label
+              htmlFor="password"
+              className="block text-sm font-medium text-gray-700"
+            >
               Contraseña
             </label>
             <input
@@ -132,7 +163,10 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onToggleMode }) => {
           </div>
 
           <div>
-            <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
+            <label
+              htmlFor="confirmPassword"
+              className="block text-sm font-medium text-gray-700"
+            >
               Confirmar Contraseña
             </label>
             <input
@@ -151,19 +185,23 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onToggleMode }) => {
           <button
             type="submit"
             disabled={loading}
-            className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${loading
-                ? "bg-gray-400 cursor-not-allowed"
-                : "bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-              }`}
+            className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${
+              loading
+                ? 'bg-gray-400 cursor-not-allowed'
+                : 'bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500'
+            }`}
           >
-            {loading ? "Creando cuenta..." : "Crear Cuenta"}
+            {loading ? 'Creando cuenta...' : 'Crear Cuenta'}
           </button>
         </form>
 
         <div className="mt-4 text-center">
           <p className="text-sm text-gray-600">
-            ¿Ya tienes cuenta? {" "}
-            <button onClick={onToggleMode} className="font-medium text-blue-600 hover:text-blue-500">
+            ¿Ya tienes cuenta?{' '}
+            <button
+              onClick={onToggleMode}
+              className="font-medium text-blue-600 hover:text-blue-500"
+            >
               Inicia sesión aquí
             </button>
           </p>

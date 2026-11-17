@@ -1,9 +1,11 @@
-import { Routes, Route } from "react-router-dom";
-import { UploadPage } from "./pages";
-import { LoginPage } from "./pages/LoginPage";
-import { ProtectedRoute } from "./components/ProtectedRoute";
-import ProjectsPage from "./pages/ProjectsPage";
-import ResultPage from "./pages/ResultPage";
+import {Routes, Route} from 'react-router-dom';
+import {UploadPage} from './pages';
+import {LoginPage} from './pages/LoginPage';
+import {ProtectedRoute} from './components/ProtectedRoute';
+import ProjectsPage from './pages/ProjectsPage';
+import ResultPage from './pages/ResultPage';
+import MisProcesamientos from './pages/MisProcesamientos';
+import ModoKaraoke from './pages/ModoKaraoke';
 
 function App() {
   return (
@@ -30,6 +32,24 @@ function App() {
         element={
           <ProtectedRoute>
             <ResultPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/procesamientos"
+        element={
+          <ProtectedRoute>
+            <MisProcesamientos />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/karaoke/:jobId"
+        element={
+          <ProtectedRoute>
+            <ModoKaraoke />
           </ProtectedRoute>
         }
       />

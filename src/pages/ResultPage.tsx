@@ -1,32 +1,47 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { ResultsPage } from "../components/ResultsPage";
-import { LoadingScreen } from "../components/LoadingScreen";
+import {useCallback, useEffect, useRef, useState} from 'react';
+import {useNavigate, useParams} from 'react-router-dom';
+import {ResultsPage} from '../components/ResultsPage';
+import {LoadingScreen} from '../components/LoadingScreen';
 import {
   jobService,
   mensajeDeError,
   etiquetaEtapa,
-} from "../services/jobService";
-import type { JobDetail } from "../services/jobService";
+  enCurso,
+  confirmarCancelacion,
+} from '../services/jobService';
+import type {JobDetail} from '../services/jobService';
 
 const sinExtension = (nombre: string) => {
-  const i = nombre.lastIndexOf(".");
+  const i = nombre.lastIndexOf('.');
   return i > 0 ? nombre.slice(0, i) : nombre;
 };
 
 /**
- * Reabre un procesamiento ya terminado desde el historial de proyectos,
- * con la misma vista que se muestra justo al acabar de procesar.
+ * Sigue un procesamiento mientras espera en la cola o se procesa, y muestra
+ * sus resultados al terminar. Tambien reabre un procesamiento terminado
+ * desde el historial de proyectos.
  */
 export default function ResultPage() {
-  const { jobId } = useParams<{ jobId: string }>();
+  const {jobId} = useParams<{jobId: string}>();
   const navigate = useNavigate();
 
   const [job, setJob] = useState<JobDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
   const pollRef = useRef<number | null>(null);
 
-  const volver = useCallback(() => navigate("/"), [navigate]);
+  const volver = useCallback(() => navigate('/'), [navigate]);
+
+  const cancelar = async (detalle: JobDetail) => {
+    if (!confirmarCancelacion(detalle.source_filename)) return;
+    try {
+      await jobService.cancelarTrabajo(detalle.id);
+      void navigate('/procesamientos');
+    } catch (e) {
+      setError(
+        await mensajeDeError(e, 'No se pudo cancelar el procesamiento.'),
+      );
+    }
+  };
 
   const cargar = useCallback(async () => {
     if (!jobId) return null;
@@ -36,7 +51,7 @@ export default function ResultPage() {
       setError(null);
       return detalle;
     } catch (e) {
-      setError(await mensajeDeError(e, "No se pudo abrir este procesamiento."));
+      setError(await mensajeDeError(e, 'No se pudo abrir este procesamiento.'));
       return null;
     }
   }, [jobId]);
@@ -46,11 +61,11 @@ export default function ResultPage() {
 
     void (async () => {
       const detalle = await cargar();
-      // Si el trabajo sigue en marcha, se sigue su progreso hasta que termine.
-      if (vivo && detalle?.status === "running") {
+      // Si el trabajo sigue en curso, se sigue su progreso hasta que termine.
+      if (vivo && detalle && enCurso(detalle.status)) {
         pollRef.current = window.setInterval(async () => {
           const actual = await cargar();
-          if (actual && actual.status !== "running" && pollRef.current !== null) {
+          if (actual && !enCurso(actual.status) && pollRef.current !== null) {
             window.clearInterval(pollRef.current);
             pollRef.current = null;
           }
@@ -64,7 +79,7 @@ export default function ResultPage() {
     };
   }, [cargar]);
 
-  const Marco = ({ children }: { children: React.ReactNode }) => (
+  const Marco = ({children}: {children: React.ReactNode}) => (
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center p-6">
       <div className="bg-gray-800 border border-gray-700 rounded-lg shadow-lg p-8 max-w-md w-full text-center">
         {children}
@@ -98,19 +113,20 @@ export default function ResultPage() {
     );
   }
 
-  if (job.status === "running") {
+  if (enCurso(job.status)) {
     return (
       <LoadingScreen
         loading
         fileName={job.source_filename}
         progress={job.progress}
         stageLabel={etiquetaEtapa(job.stage)}
-        onCancel={volver}
+        aviso="Puedes cerrar esta página: el procesamiento continúa en el servidor y lo encontrarás en tu proyecto."
+        onCancel={() => void cancelar(job)}
       />
     );
   }
 
-  if (job.status === "error") {
+  if (job.status === 'error') {
     return (
       <Marco>
         <h2 className="text-white text-xl font-semibold mb-3">
@@ -118,7 +134,7 @@ export default function ResultPage() {
         </h2>
         <p className="text-gray-300 mb-2 break-words">{job.source_filename}</p>
         <p className="text-amber-300 text-sm mb-6">
-          {job.error || "El procesamiento terminó con un error."}
+          {job.error || 'El procesamiento terminó con un error.'}
         </p>
         <button
           onClick={volver}
