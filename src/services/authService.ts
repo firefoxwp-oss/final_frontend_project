@@ -111,6 +111,9 @@ export interface User {
   name: string;
   email: string;
   created_at: string;
+  plan: 'gratuito' | 'premium';
+  /** Canciones que le quedan en el mes; null si su plan no tiene límite. */
+  canciones_restantes: number | null;
 }
 
 export interface LoginRequest {
@@ -122,6 +125,8 @@ export interface RegisterRequest {
   name: string;
   email: string;
   password: string;
+  /** Acepta los términos y condiciones y la política de privacidad. */
+  acepta_terminos: boolean;
 }
 
 /** Error de una peticion HTTP (axios), con los campos que se consultan. */

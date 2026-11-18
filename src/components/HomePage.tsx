@@ -1,4 +1,4 @@
-import {useState} from 'react';
+import {useEffect, useState} from 'react';
 import {useAuth} from '../context/useAuth';
 import {validateFile, ACCEPT_ATTR} from '../services/videoValidation';
 
@@ -17,7 +17,13 @@ export const HomePage = ({
   const [dragActive, setDragActive] = useState(false);
   const [validando, setValidando] = useState(false);
   const [errorLocal, setErrorLocal] = useState<string | null>(null);
-  const {logout} = useAuth();
+  const {logout, user, refreshUserData} = useAuth();
+
+  // El cupo del plan cambia con cada canción: se consulta al entrar
+  useEffect(() => {
+    void refreshUserData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const mensajeError = errorLocal ?? error ?? null;
 
@@ -81,6 +87,13 @@ export const HomePage = ({
               Separa la voz, la música de fondo con un solo clic y genera tu
               karaoke.
             </p>
+            {user && (
+              <p className="text-sm text-purple-200 mt-2">
+                {user.plan === 'premium'
+                  ? 'Plan Premium: canciones ilimitadas'
+                  : `Plan Gratuito: te quedan ${user.canciones_restantes ?? 0} canciones este mes`}
+              </p>
+            )}
           </div>
           <button
             onClick={logout}
