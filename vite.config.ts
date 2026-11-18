@@ -3,8 +3,9 @@ import react from '@vitejs/plugin-react';
 
 // https://vite.dev/config/
 export default defineConfig(({mode}) => {
-  // En desarrollo, base '/'; en producción, base './' para funcionar en cualquier subcarpeta Apache
-  const base = mode === 'development' ? '/' : './';
+  // En desarrollo, base '/'; en producción, base './' para funcionar en cualquier subcarpeta Apache.
+  // Azure Static Web Apps publica en la raíz: BASE_PATH='/' para que las rutas internas recarguen bien
+  const base = mode === 'development' ? '/' : process.env.BASE_PATH || './';
   return {
     plugins: [react()],
     base,
