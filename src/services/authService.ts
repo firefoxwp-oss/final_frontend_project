@@ -111,6 +111,9 @@ export interface User {
   name: string;
   email: string;
   created_at: string;
+  plan: 'gratuito' | 'premium';
+  /** Canciones que le quedan en el mes; null si su plan no tiene límite. */
+  canciones_restantes: number | null;
 }
 
 export interface LoginRequest {
