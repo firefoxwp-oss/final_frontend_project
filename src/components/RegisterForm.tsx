@@ -4,6 +4,11 @@ import {API_BASE_URL} from '../services/authService';
 import type {ErrorHttp} from '../services/authService';
 import type {RegisterRequest} from '../services/authService';
 
+// Página del sitio corporativo con los términos y la política de privacidad
+const URL_LEGAL = `${
+  import.meta.env.VITE_SITIO_URL ?? 'https://softtech-sitio.azurewebsites.net'
+}/legal`;
+
 interface RegisterFormProps {
   onToggleMode: () => void;
 }
@@ -13,6 +18,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({onToggleMode}) => {
     name: '',
     email: '',
     password: '',
+    acepta_terminos: false,
   });
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -23,7 +29,8 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({onToggleMode}) => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value,
+      [e.target.name]:
+        e.target.type === 'checkbox' ? e.target.checked : e.target.value,
     });
     if (error) setError('');
   };
@@ -180,6 +187,38 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({onToggleMode}) => {
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
               placeholder="••••••••"
             />
+          </div>
+
+          <div className="flex items-start gap-2">
+            <input
+              type="checkbox"
+              id="acepta_terminos"
+              name="acepta_terminos"
+              checked={formData.acepta_terminos}
+              onChange={handleChange}
+              required
+              className="mt-1"
+            />
+            <label htmlFor="acepta_terminos" className="text-sm text-gray-700">
+              Acepto los{' '}
+              <a
+                href={`${URL_LEGAL}#terminos`}
+                target="_blank"
+                rel="noreferrer"
+                className="text-blue-600 hover:underline"
+              >
+                términos y condiciones
+              </a>{' '}
+              y la{' '}
+              <a
+                href={`${URL_LEGAL}#privacidad`}
+                target="_blank"
+                rel="noreferrer"
+                className="text-blue-600 hover:underline"
+              >
+                política de privacidad
+              </a>
+            </label>
           </div>
 
           <button
