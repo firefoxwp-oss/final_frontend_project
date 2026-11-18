@@ -6,7 +6,8 @@ import type {RegisterRequest} from '../services/authService';
 
 // Página del sitio corporativo con los términos y la política de privacidad
 const URL_LEGAL = `${
-  import.meta.env.VITE_SITIO_URL ?? 'https://softtech-sitio.azurewebsites.net'
+  import.meta.env.VITE_SITIO_URL ??
+  'https://softtech-sitio-b2dkhnb0dwbbe3es.westus3-01.azurewebsites.net'
 }/legal`;
 
 interface RegisterFormProps {
