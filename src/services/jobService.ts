@@ -145,7 +145,9 @@ export const mensajeDeError = async (
 
   if (status === 401)
     return 'Tu sesión ha caducado. Vuelve a iniciar sesión para continuar.';
-  if (status === 403) return 'Este archivo pertenece a otra cuenta.';
+  // Un 403 puede ser el límite del plan o un archivo ajeno: se muestra el
+  // motivo que envía el servidor
+  if (status === 403) return detalle || 'Este archivo pertenece a otra cuenta.';
   if (status === 404)
     return 'Ese archivo todavía no está disponible para este vídeo.';
   if (!err?.response)
