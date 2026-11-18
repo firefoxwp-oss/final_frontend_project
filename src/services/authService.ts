@@ -125,6 +125,8 @@ export interface RegisterRequest {
   name: string;
   email: string;
   password: string;
+  /** Acepta los términos y condiciones y la política de privacidad. */
+  acepta_terminos: boolean;
 }
 
 /** Error de una peticion HTTP (axios), con los campos que se consultan. */
